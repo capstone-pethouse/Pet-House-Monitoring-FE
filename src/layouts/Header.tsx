@@ -8,7 +8,7 @@ import {
   Dog
 } from "lucide-react";
 
-export function Layout() {
+export function Header() {
   const location = useLocation();
 
   const navItems = [

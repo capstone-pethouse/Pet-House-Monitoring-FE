@@ -12,7 +12,6 @@ import {
   Trash2,
   Clock,
   Calendar,
-  Edit,
   Play
 } from "lucide-react";
 import { toast } from "sonner";
