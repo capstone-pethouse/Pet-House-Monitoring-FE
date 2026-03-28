@@ -5,7 +5,6 @@ import { Input } from "../components/ui/input";
 import { Label } from "../components/ui/label";
 import { Badge } from "../components/ui/badge";
 import { Slider } from "../components/ui/slider";
-import { Switch } from "../components/ui/switch";
 import { 
   Wind, 
   Power,
@@ -77,10 +76,27 @@ export function Ventilation() {
     setIsRunning(!isRunning);
     if (!isRunning) {
       toast.success(`환풍기 작동 시작 (강도: ${intensity}%)`);
+      if (autoMode) {
+        setAutoMode(false);
+        toast.info("수동 제어 시작으로 자동 모드가 비활성화되었습니다");
+      }
     } else {
       toast.info("환풍기 중지");
     }
   };
+
+  const handleAutoVentilation = () => {
+    setAutoMode(!autoMode);
+    if(!autoMode) {
+      toast.success("자동 환풍기 가동");
+      if(isRunning) {
+        setIsRunning(false);
+        toast.info("자동 제어 시작으로 수동 모드가 비활성되었습니다");
+      }
+    } else {
+      toast.info("자동 환풍기 중지");
+    }
+  }
 
   const handleIntensityChange = (value: number[]) => {
     setIntensity(value[0]);
@@ -91,6 +107,10 @@ export function Ventilation() {
 
   const handleAutoModeToggle = (enabled: boolean) => {
     setAutoMode(enabled);
+    if (enabled && isRunning) {
+      setIsRunning(false);
+      toast.info("자동 모드 활성화로 수동 제어가 중지되었습니다");
+    }
     toast.success(enabled ? "자동 모드 활성화" : "자동 모드 비활성화");
   };
 
@@ -206,32 +226,42 @@ export function Ventilation() {
         </Card>
 
         {/* Auto Mode Settings */}
-        <Card className="border-2 border-blue-200 bg-blue-50">
+        <Card className={`border-2 transition-all ${
+          autoMode
+            ? 'border-blue-200 bg-blue-50'
+            : 'border-gray-200 bg-gray-50'
+        }`}>
           <CardHeader>
-            <CardTitle className="flex items-center gap-2 text-blue-700">
+            <CardTitle className="flex items-center gap-2 text-gray-600">
               <Settings className="w-5 h-5" />
               자동 제어 설정
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-6">
             {/* Auto Mode Toggle */}
-            <div className="flex items-center justify-between p-4 bg-white rounded-lg border border-blue-200">
+            <div className={`flex items-center justify-between p-4 rounded-lg border transition-all ${
+              autoMode ? 'bg-white border-blue-200' : 'bg-gray-100 border-gray-200'
+            }`}>
               <div>
-                <div className="font-semibold text-gray-900">자동 모드</div>
-                <div className="text-sm text-gray-500 mt-1">
-                  온도에 따라 자동으로 작동
+                <div className="font-semibold">자동 모드</div>
+                <div className="text-sm mt-1">
+                  온도에 따 자동으로 작동
                 </div>
               </div>
-              <Switch
-                checked={autoMode}
-                onCheckedChange={handleAutoModeToggle}
-              />
+              <Button
+                onClick={handleAutoVentilation}
+                className={autoMode ? 'bg-red-500 hover:bg-red-600' : 'bg-green-500 hover:bg-green-600'}
+              >
+                {autoMode ? '중지' : '시작'}
+              </Button>
             </div>
 
             {/* Temperature Trigger */}
-            <div className="space-y-3 p-4 bg-white rounded-lg border border-blue-200">
-              <Label className="flex items-center gap-2">
-                <Thermometer className="w-4 h-4 text-blue-600" />
+            <div className={`space-y-3 p-4 rounded-lg border transition-all ${
+              autoMode ? 'bg-white border-blue-200' : 'bg-gray-100 border-gray-200 opacity-50'
+            }`}>
+              <Label className={`flex items-center gap-2 ${autoMode ? '' : 'text-gray-400'}`}>
+                <Thermometer className={`w-4 h-4 ${autoMode ? 'text-blue-600' : 'text-gray-400'}`} />
                 작동 온도 설정
               </Label>
               <div className="flex items-center gap-3">
@@ -242,28 +272,34 @@ export function Ventilation() {
                   disabled={!autoMode}
                   className="flex-1"
                 />
-                <span className="text-gray-600">°C</span>
+                <span className={autoMode ? 'text-gray-600' : 'text-gray-400'}>°C</span>
               </div>
-              <div className="text-sm text-gray-600 bg-blue-50 p-3 rounded border border-blue-200">
+              <div className={`text-sm p-3 rounded border ${
+                autoMode
+                  ? 'text-gray-600 bg-blue-50 border-blue-200'
+                  : 'text-gray-400 bg-gray-200 border-gray-300'
+              }`}>
                 💡 온도가 {autoTriggerTemp}°C 이상이 되면 환풍기가 자동으로 작동합니다
               </div>
             </div>
 
             {/* Auto Mode Rules */}
-            <div className="space-y-2 p-4 bg-white rounded-lg border border-blue-200">
-              <div className="font-medium text-gray-900 mb-2">자동 제어 규칙</div>
-              <div className="space-y-2 text-sm text-gray-600">
+            <div className={`space-y-2 p-4 rounded-lg border transition-all ${
+              autoMode ? 'bg-white border-blue-200' : 'bg-gray-100 border-gray-200 opacity-50'
+            }`}>
+              <div className={`font-medium mb-2 ${autoMode ? 'text-gray-900' : 'text-gray-400'}`}>자동 제어 규칙</div>
+              <div className="space-y-2 text-sm">
                 <div className="flex items-start gap-2">
-                  <div className="w-1.5 h-1.5 rounded-full bg-blue-500 mt-1.5"></div>
-                  <span>{autoTriggerTemp}°C 이상: 강도 70%로 작동</span>
+                  <div className={`w-1.5 h-1.5 rounded-full mt-1.5 ${autoMode ? 'bg-blue-500' : 'bg-gray-400'}`}></div>
+                  <span className={autoMode ? 'text-gray-600' : 'text-gray-400'}>{autoTriggerTemp}°C 이상: 강도 70%로 작동</span>
                 </div>
                 <div className="flex items-start gap-2">
-                  <div className="w-1.5 h-1.5 rounded-full bg-blue-500 mt-1.5"></div>
-                  <span>{autoTriggerTemp + 2}°C 이상: 강도 90%로 작동</span>
+                  <div className={`w-1.5 h-1.5 rounded-full mt-1.5 ${autoMode ? 'bg-blue-500' : 'bg-gray-400'}`}></div>
+                  <span className={autoMode ? 'text-gray-600' : 'text-gray-400'}>{autoTriggerTemp + 2}°C 이상: 강도 90%로 작동</span>
                 </div>
                 <div className="flex items-start gap-2">
-                  <div className="w-1.5 h-1.5 rounded-full bg-blue-500 mt-1.5"></div>
-                  <span>{autoTriggerTemp - 2}°C 이하: 자동 중지</span>
+                  <div className={`w-1.5 h-1.5 rounded-full mt-1.5 ${autoMode ? 'bg-blue-500' : 'bg-gray-400'}`}></div>
+                  <span className={autoMode ? 'text-gray-600' : 'text-gray-400'}>{autoTriggerTemp - 2}°C 이하: 자동 중지</span>
                 </div>
               </div>
             </div>
