@@ -4,12 +4,12 @@ import { Statistics } from "./pages/Statistics";
 import { AudioManagement } from "./pages/AudioManagement";
 import { FeedWater } from "./pages/FeedWater";
 import { Ventilation } from "./pages/Ventilation";
-import { Header } from "./layouts/Header";
+import { Layout } from "./layouts/Sidebar"
 
 export const router = createBrowserRouter([
   {
     path: "/",
-    Component: Header,
+    Component: Layout,
     children: [
       { index: true, Component: Dashboard },
       { path: "statistics", Component: Statistics },
