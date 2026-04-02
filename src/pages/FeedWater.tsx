@@ -12,6 +12,7 @@ import {
   Trash2,
   Clock,
   Calendar,
+  Edit,
   Play
 } from "lucide-react";
 import { toast } from "sonner";
@@ -59,6 +60,9 @@ export function FeedWater() {
     amount: 100,
   });
 
+  const [editingSchedule, setEditingSchedule] = useState<Schedule | null>(null);
+  const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
+
   const handleManualFeed = (amount: number) => {
     toast.success(`사료 ${amount}g이 공급되었습니다`);
   };
@@ -80,6 +84,19 @@ export function FeedWater() {
   const handleDeleteSchedule = (id: string) => {
     setSchedules(schedules.filter(s => s.id !== id));
     toast.success("스케줄이 삭제되었습니다");
+  };
+
+  const handleEditSchedule = (schedule: Schedule) => {
+    setEditingSchedule({ ...schedule });
+    setIsEditDialogOpen(true);
+  };
+
+  const handleSaveEditSchedule = () => {
+    if (!editingSchedule) return;
+    setSchedules(schedules.map(s => s.id === editingSchedule.id ? editingSchedule : s));
+    setIsEditDialogOpen(false);
+    setEditingSchedule(null);
+    toast.success("스케줄이 수정되었습니다");
   };
 
   const handleToggleSchedule = (id: string) => {
@@ -335,6 +352,14 @@ export function FeedWater() {
                   <Button
                     variant="ghost"
                     size="icon"
+                    onClick={() => handleEditSchedule(schedule)}
+                    title="스케줄 수정"
+                  >
+                    <Edit className="w-4 h-4 text-blue-500" />
+                  </Button>
+                  <Button
+                    variant="ghost"
+                    size="icon"
                     onClick={() => handleToggleSchedule(schedule.id)}
                   >
                     <Play className="w-4 h-4" />
@@ -352,6 +377,56 @@ export function FeedWater() {
           </div>
         </CardContent>
       </Card>
+
+      {/* Edit Schedule Dialog */}
+      <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>스케줄 수정</DialogTitle>
+          </DialogHeader>
+          {editingSchedule && (
+            <div className="space-y-4 pt-4">
+              <div>
+                <Label>종류</Label>
+                <select
+                  className="w-full mt-1.5 px-3 py-2 border border-gray-300 rounded-lg"
+                  value={editingSchedule.type}
+                  onChange={(e) => setEditingSchedule({ ...editingSchedule, type: e.target.value as 'feed' | 'water' })}
+                >
+                  <option value="feed">사료</option>
+                  <option value="water">물</option>
+                </select>
+              </div>
+              <div>
+                <Label>시간</Label>
+                <Input
+                  type="time"
+                  value={editingSchedule.time}
+                  onChange={(e) => setEditingSchedule({ ...editingSchedule, time: e.target.value })}
+                  className="mt-1.5"
+                />
+              </div>
+              <div>
+                <Label>용량 ({editingSchedule.type === 'feed' ? 'g' : 'ml'})</Label>
+                <Input
+                  type="number"
+                  value={editingSchedule.amount}
+                  onChange={(e) => setEditingSchedule({ ...editingSchedule, amount: Number(e.target.value) })}
+                  className="mt-1.5"
+                />
+              </div>
+              <div className="flex gap-2">
+                <Button variant="outline" className="flex-1" onClick={() => setIsEditDialogOpen(false)}>
+                  취소
+                </Button>
+                <Button className="flex-1" onClick={handleSaveEditSchedule}>
+                  저장하기
+                </Button>
+              </div>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
 
       {/* History */}
       <Card>
