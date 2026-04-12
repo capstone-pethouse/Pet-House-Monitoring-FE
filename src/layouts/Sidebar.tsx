@@ -18,7 +18,7 @@ import {
   PanelLeftClose,
   PanelLeftOpen,
 } from "lucide-react";
-import { usePetHouse, type PetHouse, COLOR_MAP, PET_EMOJI } from "../components/PetHouseContext";
+import { usePetHouse, type PetHouse, COLOR_MAP, PET_EMOJI } from "../store/petStore";
 import { toast } from "sonner";
 
 const PET_TYPE_LABEL: Record<string, string> = {
