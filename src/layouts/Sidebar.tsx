@@ -164,7 +164,7 @@ export function Layout() {
   const [desktopSidebarOpen, setDesktopSidebarOpen] = useState(true);
   const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false);
   const [showAddModal, setShowAddModal] = useState(false);
-  const [sidebarWidth, setSidebarWidth] = useState(240);
+  const [sidebarWidth, setSidebarWidth] = useState(320);
   const isResizing = useRef(false);
 
   const startResize = useCallback((e: React.MouseEvent) => {
@@ -175,7 +175,8 @@ export function Layout() {
 
     const onMouseMove = (ev: MouseEvent) => {
       if (!isResizing.current) return;
-      const newWidth = Math.min(400, Math.max(160, ev.clientX));
+      const maxWidth = window.innerWidth * 0.4;
+      const newWidth = Math.min(maxWidth, Math.max(160, ev.clientX));
       setSidebarWidth(newWidth);
     };
 
