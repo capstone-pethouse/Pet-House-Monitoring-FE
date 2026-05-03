@@ -1,10 +1,10 @@
 import { useState } from "react";
-import { Card, CardContent, CardHeader, CardTitle } from "../components/ui/card";
-import { Button } from "../components/ui/button";
-import { Input } from "../components/ui/input";
-import { Label } from "../components/ui/label";
-import { Badge } from "../components/ui/badge";
-import { Slider } from "../components/ui/slider";
+import { Card, CardContent, CardHeader, CardTitle } from "../../components/ui/card";
+import { Button } from "../../components/ui/button";
+import { Input } from "../../components/ui/input";
+import { Label } from "../../components/ui/label";
+import { Badge } from "../../components/ui/badge";
+import { Slider } from "../../components/ui/slider";
 import { 
   Utensils, 
   Droplets, 
@@ -16,7 +16,7 @@ import {
   Play
 } from "lucide-react";
 import { toast } from "sonner";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "../components/ui/dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "../../components/ui/dialog";
 
 interface Schedule {
   id: string;

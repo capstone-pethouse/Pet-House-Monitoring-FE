@@ -144,23 +144,23 @@ function AddHouseModal({ onClose }: { onClose: () => void }) {
 }
 
 const NAV_ITEMS = [
-  { path: "/", label: "대시보드", icon: Home },
-  { path: "/feed-water", label: "급여/급수", icon: Utensils },
-  { path: "/ventilation", label: "환풍기", icon: Wind },
-  { path: "/audio", label: "음성 데이터", icon: Volume2 },
-  { path: "/statistics", label: "통계", icon: BarChart3 },
-  { path: "/hospital", label: "동물병원", icon: Stethoscope },
-  { path: "/settings", label: "설정", icon: Settings },
+  { path: "/user", label: "대시보드", icon: Home },
+  { path: "/user/feed-water", label: "급여/급수", icon: Utensils },
+  { path: "/user/ventilation", label: "환풍기", icon: Wind },
+  { path: "/user/audio", label: "음성 데이터", icon: Volume2 },
+  { path: "/user/statistics", label: "통계", icon: BarChart3 },
+  { path: "/user/hospital", label: "동물병원", icon: Stethoscope },
+  { path: "/user/settings", label: "설정", icon: Settings },
 ];
 
 const PAGE_TITLES: Record<string, string> = {
-  "/": "대시보드",
-  "/feed-water": "급여 / 급수",
-  "/ventilation": "환풍기 제어",
-  "/audio": "음성 데이터",
-  "/statistics": "통계",
-  "/hospital": "동물병원",
-  "/settings": "설정",
+  "/user": "대시보드",
+  "/user/feed-water": "급여 / 급수",
+  "/user/ventilation": "환풍기 제어",
+  "/user/audio": "음성 데이터",
+  "/user/statistics": "통계",
+  "/user/hospital": "동물병원",
+  "/user/settings": "설정",
 };
 
 export function Layout() {

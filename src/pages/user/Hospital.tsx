@@ -2,10 +2,10 @@ import { useState, useEffect, useMemo } from "react";
 import L from "leaflet";
 import "leaflet/dist/leaflet.css";
 import { MapContainer, TileLayer, Marker, Popup, useMap } from "react-leaflet";
-import { Card, CardContent } from "../components/ui/card";
-import { Badge } from "../components/ui/badge";
-import { Button } from "../components/ui/button";
-import { Input } from "../components/ui/input";
+import { Card, CardContent } from "../../components/ui/card";
+import { Badge } from "../../components/ui/badge";
+import { Button } from "../../components/ui/button";
+import { Input } from "../../components/ui/input";
 import {
     MapPin,
     Phone,

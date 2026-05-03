@@ -1,16 +1,30 @@
-import { createBrowserRouter } from "react-router";
-import { Dashboard } from "./pages/Dashboard";
-import { Statistics } from "./pages/Statistics";
-import { AudioManagement } from "./pages/AudioManagement";
-import { FeedWater } from "./pages/FeedWater";
-import { Ventilation } from "./pages/Ventilation";
-import { SettingsPage } from "./pages/Settings";
-import { HospitalPage } from "./pages/Hospital";
-import { Layout } from "./layouts/Sidebar"
+import { createBrowserRouter, Navigate } from "react-router";
+import { Dashboard } from "./pages/user/Dashboard";
+import { Statistics } from "./pages/user/Statistics";
+import { AudioManagement } from "./pages/user/AudioManagement";
+import { FeedWater } from "./pages/user/FeedWater";
+import { Ventilation } from "./pages/user/Ventilation";
+import { SettingsPage } from "./pages/user/Settings";
+import { HospitalPage } from "./pages/user/Hospital";
+import { Layout } from "./layouts/Sidebar";
+import { AdminDashboard } from "./pages/admin/AdminDashboard";
+import { AuthPage } from "./pages/auth/AuthPage";
 
 export const router = createBrowserRouter([
   {
     path: "/",
+    element: <Navigate to="/auth" replace />,
+  },
+  {
+    path: "/auth",
+    Component: AuthPage,
+  },
+  {
+    path: "/admin",
+    Component: AdminDashboard,
+  },
+  {
+    path: "/user",
     Component: Layout,
     children: [
       { index: true, Component: Dashboard },
