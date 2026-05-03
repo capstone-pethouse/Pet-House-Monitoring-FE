@@ -268,7 +268,7 @@ export function Ventilation() {
         {conditions.map((cond, i) => (
           <div key={i} className="grid grid-cols-[1fr_16px_1fr_32px] items-center gap-2 bg-gray-50 border border-gray-200 rounded-lg px-3 py-2">
             <div className="flex items-center gap-1">
-              <Thermometer className="w-3.5 h-3.5 text-red-400 flex-shrink-0" />
+              <Thermometer className="w-3.5 h-3.5 text-red-400 shrink-0" />
               <Input
                 type="number"
                 value={cond.temp}
@@ -278,7 +278,7 @@ export function Ventilation() {
             </div>
             <ArrowRight className="w-4 h-4 text-gray-400" />
             <div className="flex items-center gap-1">
-              <Wind className="w-3.5 h-3.5 text-blue-400 flex-shrink-0" />
+              <Wind className="w-3.5 h-3.5 text-blue-400 shrink-0" />
               <Input
                 type="number"
                 min={1}
@@ -437,7 +437,7 @@ export function Ventilation() {
                       <div className="pl-4 space-y-0.5">
                         {r.conditions.map((c, i) => (
                           <div key={i} className="flex items-center gap-2">
-                            <div className={`w-1.5 h-1.5 rounded-full flex-shrink-0 ${autoMode ? 'bg-blue-400' : 'bg-gray-400'}`} />
+                            <div className={`w-1.5 h-1.5 rounded-full shrink-0 ${autoMode ? 'bg-blue-400' : 'bg-gray-400'}`} />
                             <span className={autoMode ? 'text-gray-600' : 'text-gray-400'}>
                               {c.temp}°C 이상 → 강도 {c.intensity}%
                             </span>
@@ -540,7 +540,7 @@ export function Ventilation() {
         <CardContent>
           {!autoMode && (
             <div className="mb-4 p-3 bg-yellow-50 border border-yellow-200 rounded-lg text-sm text-yellow-700 flex items-center gap-2">
-              <Settings className="w-4 h-4 flex-shrink-0" />
+              <Settings className="w-4 h-4 shrink-0" />
               자동 모드가 꺼져 있어 아래 규칙이 적용되지 않습니다.
             </div>
           )}
@@ -560,14 +560,14 @@ export function Ventilation() {
                   {/* Rule header row */}
                   <div className="flex items-center justify-between px-4 py-3">
                     <div className="flex items-center gap-3 min-w-0">
-                      <div className={`w-9 h-9 rounded-lg flex items-center justify-center flex-shrink-0 ${
+                      <div className={`w-9 h-9 rounded-lg flex items-center justify-center shrink-0 ${
                         rule.enabled && autoMode ? 'bg-blue-500' : 'bg-gray-400'
                       }`}>
                         <Wind className="w-4 h-4 text-white" />
                       </div>
                       <div className="min-w-0">
                         <div className="font-medium text-gray-900 flex items-center gap-1.5">
-                          <Clock className="w-3.5 h-3.5 text-gray-500 flex-shrink-0" />
+                          <Clock className="w-3.5 h-3.5 text-gray-500 shrink-0" />
                           {rule.timeStart} ~ {rule.timeEnd}
                         </div>
                         <div className="text-xs text-gray-500 mt-0.5">
@@ -580,7 +580,7 @@ export function Ventilation() {
                       </div>
                     </div>
 
-                    <div className="flex items-center gap-1 flex-shrink-0">
+                    <div className="flex items-center gap-1 shrink-0">
                       <Badge variant={rule.enabled ? 'default' : 'secondary'}>
                         {rule.enabled ? '활성' : '비활성'}
                       </Badge>

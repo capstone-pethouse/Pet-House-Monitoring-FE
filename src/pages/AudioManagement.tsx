@@ -143,7 +143,7 @@ export function AudioManagement() {
         <Button 
           onClick={handleSendOwnerVoice}
           disabled={recordingOwnerVoice}
-          className="bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700"
+          className="bg-linear-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700"
         >
           <Send className="w-4 h-4 mr-2" />
           {recordingOwnerVoice ? "전송 중..." : "주인 음성 전송"}
@@ -243,7 +243,7 @@ export function AudioManagement() {
       </Card>
 
       {/* Owner Voice Control */}
-      <Card className="bg-gradient-to-br from-blue-50 to-purple-50 border-blue-200">
+      <Card className="bg-linear-to-br from-blue-50 to-purple-50 border-blue-200">
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <Mic className="w-5 h-5 text-blue-600" />

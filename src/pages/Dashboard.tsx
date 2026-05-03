@@ -77,7 +77,7 @@ export function Dashboard() {
   return (
     <div className="space-y-6">
       {/* Status Banner */}
-      <div className="bg-gradient-to-r from-blue-500 to-purple-600 rounded-xl p-6 text-white">
+      <div className="bg-linear-to-r from-blue-500 to-purple-600 rounded-xl p-6 text-white">
         <div className="flex items-center justify-between">
           <div>
             <h2 className="text-2xl font-bold mb-2">실시간 모니터링</h2>
@@ -124,7 +124,7 @@ export function Dashboard() {
                     className="w-full h-full object-cover"
                   />
                   {/* CCTV Overlay */}
-                  <div className="absolute inset-0 bg-gradient-to-b from-black/40 via-transparent to-black/40 pointer-events-none">
+                  <div className="absolute inset-0 bg-linear-to-b from-black/40 via-transparent to-black/40 pointer-events-none">
                     <div className="absolute top-3 left-3 flex items-center gap-2">
                       <div className="w-3 h-3 bg-red-500 rounded-full animate-pulse"></div>
                       <span className="text-white text-sm font-mono">REC</span>
@@ -157,7 +157,7 @@ export function Dashboard() {
                 새로고침
               </Button>
             </div>
-            <div className="mt-3 p-3 bg-gradient-to-r from-blue-50 to-purple-50 rounded-lg border border-purple-200">
+            <div className="mt-3 p-3 bg-linear-to-r from-blue-50 to-purple-50 rounded-lg border border-purple-200">
               <div className="flex items-center justify-between mb-2">
                 <span className="text-sm font-medium text-gray-700">주인 음성 전달</span>
                 <Mic className="w-4 h-4 text-purple-600" />
@@ -165,7 +165,7 @@ export function Dashboard() {
               <Button 
                 onClick={handleSendOwnerVoice}
                 disabled={sendingVoice}
-                className="w-full bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700"
+                className="w-full bg-linear-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700"
               >
                 <Send className="w-4 h-4 mr-2" />
                 {sendingVoice ? "전송 중..." : "음성 전송하기"}
