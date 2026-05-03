@@ -17,6 +17,8 @@ import {
   Trash2,
   PanelLeftClose,
   PanelLeftOpen,
+  Settings,
+  Stethoscope,
 } from "lucide-react";
 import { usePetHouse, type PetHouse, COLOR_MAP, PET_EMOJI } from "../store/petStore";
 import { toast } from "sonner";
@@ -147,6 +149,8 @@ const NAV_ITEMS = [
   { path: "/ventilation", label: "환풍기", icon: Wind },
   { path: "/audio", label: "음성 데이터", icon: Volume2 },
   { path: "/statistics", label: "통계", icon: BarChart3 },
+  { path: "/hospital", label: "동물병원", icon: Stethoscope },
+  { path: "/settings", label: "설정", icon: Settings },
 ];
 
 const PAGE_TITLES: Record<string, string> = {
@@ -155,6 +159,8 @@ const PAGE_TITLES: Record<string, string> = {
   "/ventilation": "환풍기 제어",
   "/audio": "음성 데이터",
   "/statistics": "통계",
+  "/hospital": "동물병원",
+  "/settings": "설정",
 };
 
 export function Layout() {
