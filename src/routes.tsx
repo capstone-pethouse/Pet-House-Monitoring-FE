@@ -1,4 +1,4 @@
-import { createBrowserRouter, Navigate } from "react-router";
+import { createBrowserRouter } from "react-router";
 import { Dashboard } from "./pages/user/Dashboard";
 import { Statistics } from "./pages/user/Statistics";
 import { AudioManagement } from "./pages/user/AudioManagement";
@@ -9,11 +9,12 @@ import { HospitalPage } from "./pages/user/Hospital";
 import { Layout } from "./layouts/Sidebar";
 import { AdminDashboard } from "./pages/admin/AdminDashboard";
 import { AuthPage } from "./pages/auth/AuthPage";
+import { Landing } from "./pages/Landing";
 
 export const router = createBrowserRouter([
   {
     path: "/",
-    element: <Navigate to="/auth" replace />,
+    Component: Landing,
   },
   {
     path: "/auth",
