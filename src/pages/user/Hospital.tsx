@@ -57,32 +57,6 @@ const MED_CODE_MAP: Record<string, { label: string; color: string; bg: string; b
     med07: { label: "응급의학", color: "text-rose-700", bg: "bg-rose-100", border: "border-rose-200" },
 };
 
-const MOCK_HOSPITALS: Hospital[] = [
-    { seq: 1, name: "행복동물병원", location: "경기도 성남시 분당구 정자일로 87", phone: "031-711-1234", latitude: 37.3630, longitude: 127.1050, mainMedCode: "med01", regDate: "2024-03-15" },
-    { seq: 2, name: "BB동물병원", location: "경기도 성남시 분당구 동물사랑길 117", phone: "031-456-5123", latitude: 37.3596, longitude: 127.1054, mainMedCode: "med02", regDate: "2025-10-02" },
-    { seq: 3, name: "사랑동물의원", location: "경기도 성남시 분당구 서현로 180번길 22", phone: "031-789-4567", latitude: 37.3520, longitude: 127.1100, mainMedCode: "med03", regDate: "2023-06-10" },
-    { seq: 4, name: "분당24시동물병원", location: "경기도 성남시 분당구 야탑로 69", phone: "031-555-8888", latitude: 37.3480, longitude: 127.1270, mainMedCode: "med07", regDate: "2022-11-20" },
-    { seq: 5, name: "판교동물의원", location: "경기도 성남시 분당구 판교역로 235", phone: "031-444-7777", latitude: 37.3980, longitude: 127.1080, mainMedCode: "med02", regDate: "2024-08-22" },
-    { seq: 6, name: "정자동물병원", location: "경기도 성남시 분당구 정자동 119-1", phone: "031-222-3333", latitude: 37.3640, longitude: 127.1120, mainMedCode: "med06", regDate: "2023-12-01" },
-    { seq: 7, name: "수내동물의원", location: "경기도 성남시 분당구 수내동 13-5", phone: "031-333-4444", latitude: 37.3570, longitude: 127.1200, mainMedCode: "med05", regDate: "2024-02-18" },
-    { seq: 8, name: "야탑동물병원", location: "경기도 성남시 분당구 야탑동 370", phone: "031-666-9999", latitude: 37.3410, longitude: 127.1280, mainMedCode: "med03", regDate: "2024-07-30" },
-    { seq: 9, name: "서현동물병원", location: "경기도 성남시 분당구 서현동 255-1", phone: "031-888-5555", latitude: 37.3501, longitude: 127.1170, mainMedCode: "med04", regDate: "2024-01-09" },
-    { seq: 10, name: "구미동물의원", location: "경기도 성남시 분당구 구미동 11", phone: "031-777-2222", latitude: 37.3452, longitude: 127.1050, mainMedCode: "med01", regDate: "2023-09-18" },
-];
-
-const MOCK_MED_LIST: Record<number, MedItem[]> = {
-    1: [{ hospitalSeq: 1, medCode: "med01" }, { hospitalSeq: 1, medCode: "med03" }, { hospitalSeq: 1, medCode: "med06" }],
-    2: [{ hospitalSeq: 2, medCode: "med02" }, { hospitalSeq: 2, medCode: "med06" }],
-    3: [{ hospitalSeq: 3, medCode: "med03" }, { hospitalSeq: 3, medCode: "med01" }],
-    4: [{ hospitalSeq: 4, medCode: "med07" }, { hospitalSeq: 4, medCode: "med01" }, { hospitalSeq: 4, medCode: "med02" }],
-    5: [{ hospitalSeq: 5, medCode: "med02" }, { hospitalSeq: 5, medCode: "med01" }],
-    6: [{ hospitalSeq: 6, medCode: "med06" }, { hospitalSeq: 6, medCode: "med01" }, { hospitalSeq: 6, medCode: "med04" }],
-    7: [{ hospitalSeq: 7, medCode: "med05" }],
-    8: [{ hospitalSeq: 8, medCode: "med03" }, { hospitalSeq: 8, medCode: "med01" }],
-    9: [{ hospitalSeq: 9, medCode: "med04" }, { hospitalSeq: 9, medCode: "med01" }],
-    10: [{ hospitalSeq: 10, medCode: "med01" }, { hospitalSeq: 10, medCode: "med06" }],
-};
-
 // Default center (Bundang area matches mock data)
 const DEFAULT_CENTER: [number, number] = [37.3630, 127.1080];
 
@@ -344,9 +318,9 @@ export function HospitalPage() {
     const [mapCenter, setMapCenter] = useState<[number, number]>(DEFAULT_CENTER);
     const [mapZoom, setMapZoom] = useState(14);
 
-    // API에서 가져온 병원 데이터 (실패 시 mock 사용)
-    const [hospitals, setHospitals] = useState<Hospital[]>(MOCK_HOSPITALS);
-    const [apiMedList, setApiMedList] = useState<Record<number, MedItem[]>>(MOCK_MED_LIST);
+    // API에서 가져온 병원 데이터
+    const [hospitals, setHospitals] = useState<Hospital[]>([]);
+    const [apiMedList, setApiMedList] = useState<Record<number, MedItem[]>>({});
 
     // API에서 병원 목록 가져오기
     useEffect(() => {
@@ -366,14 +340,14 @@ export function HospitalPage() {
 
     // 병원 상세(진료과목) 정보 가져오기
     const fetchMedList = useCallback(async (seq: number) => {
-        if (apiMedList[seq] && apiMedList[seq] !== MOCK_MED_LIST[seq]) return; // 이미 API에서 가져온 경우
+        if (apiMedList[seq]) return;
         try {
             const detail = await getHospitalDetail(seq);
-            if (detail.medList && detail.medList.length > 0) {
+            if (detail.medList) {
                 setApiMedList(prev => ({ ...prev, [seq]: detail.medList }));
             }
-        } catch {
-            // mock 유지
+        } catch (error) {
+            console.error('[Hospital] Med Detail Fetch Error:', error);
         }
     }, [apiMedList]);
 
@@ -446,11 +420,13 @@ export function HospitalPage() {
 
     const uniqueMedCodes = useMemo(() => {
         const codes = new Set<string>();
-        MOCK_HOSPITALS.forEach((h) => {
-            (MOCK_MED_LIST[h.seq] ?? []).forEach((m) => codes.add(m.medCode));
+        hospitals.forEach((h) => {
+            (apiMedList[h.seq] ?? []).forEach((m) => codes.add(m.medCode));
         });
+        // 만약 로딩 전이라 데이터가 없다면 기본 진료과목들 표시
+        if (codes.size === 0) return Object.keys(MED_CODE_MAP).sort();
         return Array.from(codes).sort();
-    }, []);
+    }, [hospitals, apiMedList]);
 
     // ── Render ──────────────────────────────────────────────────────────────────
     return (

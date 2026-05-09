@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "../../components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "../../components/ui/tabs";
 import { 
@@ -19,53 +19,20 @@ import {
 
 export function Statistics() {
   const [period, setPeriod] = useState<'daily' | 'weekly' | 'monthly'>('daily');
+  const [data, setData] = useState<any[]>([]);
 
-  // Mock data for different periods
-  const generateDailyData = () => {
-    return Array.from({ length: 24 }, (_, i) => ({
-      time: `${i}:00`,
-      co2: 400 + Math.random() * 200,
-      temperature: 20 + Math.random() * 5,
-      humidity: 50 + Math.random() * 15,
-      barking: Math.floor(Math.random() * 8),
-    }));
-  };
-
-  const generateWeeklyData = () => {
-    const days = ['월', '화', '수', '목', '금', '토', '일'];
-    return days.map(day => ({
-      time: day,
-      co2: 400 + Math.random() * 150,
-      temperature: 21 + Math.random() * 3,
-      humidity: 52 + Math.random() * 10,
-      barking: Math.floor(Math.random() * 30 + 5),
-    }));
-  };
-
-  const generateMonthlyData = () => {
-    return Array.from({ length: 30 }, (_, i) => ({
-      time: `${i + 1}일`,
-      co2: 420 + Math.random() * 120,
-      temperature: 21 + Math.random() * 3,
-      humidity: 53 + Math.random() * 10,
-      barking: Math.floor(Math.random() * 40 + 5),
-    }));
-  };
-
-  const getData = () => {
-    switch (period) {
-      case 'daily':
-        return generateDailyData();
-      case 'weekly':
-        return generateWeeklyData();
-      case 'monthly':
-        return generateMonthlyData();
-      default:
-        return generateDailyData();
-    }
-  };
-
-  const data = getData();
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        const response = await fetch(`${import.meta.env.VITE_API_BASE_URL || '/api'}/stats?period=${period}`);
+        const result = await response.json();
+        setData(result);
+      } catch (error) {
+        console.error('[Stats] Fetch Error:', error);
+      }
+    };
+    fetchData();
+  }, [period]);
 
   return (
     <div className="space-y-6">

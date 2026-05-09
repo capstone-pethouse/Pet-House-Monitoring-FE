@@ -71,38 +71,6 @@ function toAutoRule(res: FanScheduleResponse): AutoRule {
   };
 }
 
-// Mock 초기 데이터 (API 실패 시 fallback)
-const MOCK_AUTO_RULES: AutoRule[] = [
-  {
-    id: '1',
-    timeStart: '08:00',
-    timeEnd: '20:00',
-    conditions: [
-      { temp: 22, intensity: 50 },
-      { temp: 25, intensity: 70 },
-      { temp: 28, intensity: 90 },
-    ],
-    enabled: true,
-  },
-  {
-    id: '2',
-    timeStart: '20:00',
-    timeEnd: '08:00',
-    conditions: [
-      { temp: 24, intensity: 40 },
-      { temp: 27, intensity: 60 },
-    ],
-    enabled: false,
-  },
-];
-
-const MOCK_HISTORY: VentilationHistory[] = [
-  { id: '1', timestamp: '2026-03-15T14:30:00', duration: 10, intensity: 70, mode: 'auto', trigger: '온도 26°C 도달 (강도 70%)' },
-  { id: '2', timestamp: '2026-03-15T11:30:00', duration: 15, intensity: 80, mode: 'manual' },
-  { id: '3', timestamp: '2026-03-15T08:45:00', duration: 12, intensity: 60, mode: 'auto', trigger: '온도 25°C 도달 (강도 60%)' },
-  { id: '4', timestamp: '2026-03-14T16:20:00', duration: 20, intensity: 90, mode: 'auto', trigger: '온도 28°C 도달 (강도 90%)' },
-  { id: '5', timestamp: '2026-03-14T13:10:00', duration: 8, intensity: 50, mode: 'manual' },
-];
 
 export function Ventilation() {
   const { activeHouse } = usePetHouse();
@@ -110,21 +78,22 @@ export function Ventilation() {
   const [intensity, setIntensity] = useState(50);
   const [autoMode, setAutoMode] = useState(false);
 
-  const [autoRules, setAutoRules] = useState<AutoRule[]>(MOCK_AUTO_RULES);
+  const [autoRules, setAutoRules] = useState<AutoRule[]>([]);
+  const [history, setHistory] = useState<VentilationHistory[]>([]);
 
   // API에서 환풍기 스케줄 가져오기
   useEffect(() => {
-    const fetchSchedules = async () => {
+    const fetchData = async () => {
       try {
         const page = await fanApi.getFanSchedules(activeHouse.id);
-        if (page.content && page.content.length > 0) {
-          setAutoRules(page.content.map(toAutoRule));
-        }
-      } catch {
-        console.info('[Ventilation] API 미연결 - Mock 데이터 사용');
+        setAutoRules(page.content.map(toAutoRule));
+        // Note: 백엔드에 history API가 아직 없으므로 나중에 추가 필요
+        // 현재는 MSW에서 mock 데이터를 내려줄 수 있음 (필요 시 API 추가 정의)
+      } catch (error) {
+        console.error('[Ventilation] API Fetch Error:', error);
       }
     };
-    fetchSchedules();
+    fetchData();
   }, [activeHouse.id]);
 
   const [newRule, setNewRule] = useState({ ...defaultNewRule, conditions: [{ ...defaultCondition }] });
@@ -132,8 +101,6 @@ export function Ventilation() {
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [expandedRules, setExpandedRules] = useState<Set<string>>(new Set(['1']));
   const [addDialogOpen, setAddDialogOpen] = useState(false);
-
-  const [history] = useState<VentilationHistory[]>(MOCK_HISTORY);
 
 
   const handleToggleVentilation = () => {

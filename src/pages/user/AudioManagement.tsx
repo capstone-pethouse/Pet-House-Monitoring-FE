@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "../../components/ui/card";
 import { Button } from "../../components/ui/button";
 import { Badge } from "../../components/ui/badge";
@@ -28,64 +28,20 @@ interface AudioEvent {
 export function AudioManagement() {
   const [playingId, setPlayingId] = useState<string | null>(null);
   const [recordingOwnerVoice, setRecordingOwnerVoice] = useState(false);
+  const [audioEvents, setAudioEvents] = useState<AudioEvent[]>([]);
 
-  // Mock audio events
-  const audioEvents: AudioEvent[] = [
-    {
-      id: '1',
-      timestamp: '2026-03-15T14:23:00',
-      date: '2026-03-15',
-      time: '14:23',
-      duration: 5,
-      audioUrl: '#',
-      analyzed: true,
-      severity: 'high',
-      notes: '연속 짖음 감지 - 불안감 표현 가능성'
-    },
-    {
-      id: '2',
-      timestamp: '2026-03-15T13:45:00',
-      date: '2026-03-15',
-      time: '13:45',
-      duration: 3,
-      audioUrl: '#',
-      analyzed: true,
-      severity: 'medium',
-      notes: '외부 소음에 반응'
-    },
-    {
-      id: '3',
-      timestamp: '2026-03-15T12:10:00',
-      date: '2026-03-15',
-      time: '12:10',
-      duration: 2,
-      audioUrl: '#',
-      analyzed: false,
-      severity: 'low',
-    },
-    {
-      id: '4',
-      timestamp: '2026-03-15T10:30:00',
-      date: '2026-03-15',
-      time: '10:30',
-      duration: 4,
-      audioUrl: '#',
-      analyzed: true,
-      severity: 'medium',
-      notes: '일반적인 경계 행동'
-    },
-    {
-      id: '5',
-      timestamp: '2026-03-14T18:15:00',
-      date: '2026-03-14',
-      time: '18:15',
-      duration: 6,
-      audioUrl: '#',
-      analyzed: true,
-      severity: 'high',
-      notes: '분리불안 가능성'
-    },
-  ];
+  useEffect(() => {
+    const fetchEvents = async () => {
+      try {
+        const response = await fetch(`${import.meta.env.VITE_API_BASE_URL || '/api'}/audio/events`);
+        const data = await response.json();
+        setAudioEvents(data.content || []);
+      } catch (error) {
+        console.error('[Audio] Fetch Error:', error);
+      }
+    };
+    fetchEvents();
+  }, []);
 
   const handlePlayPause = (id: string) => {
     if (playingId === id) {

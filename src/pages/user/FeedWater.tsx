@@ -68,32 +68,14 @@ function toHistory(res: SupplyLogHistoryResponse, index: number): History {
   };
 }
 
-// Mock 초기 데이터 (API 실패 시 fallback)
-const MOCK_SCHEDULES: Schedule[] = [
-  { id: '1', type: 'feed', time: '08:00', amount: 100, enabled: true },
-  { id: '2', type: 'feed', time: '18:00', amount: 100, enabled: true },
-  { id: '3', type: 'water', time: '09:00', amount: 200, enabled: true },
-  { id: '4', type: 'water', time: '15:00', amount: 200, enabled: true },
-  { id: '5', type: 'water', time: '21:00', amount: 200, enabled: true },
-];
-
-const MOCK_HISTORY: History[] = [
-  { id: '1', type: 'water', timestamp: '2026-03-15T14:23:00', amount: 200, mode: 'manual' },
-  { id: '2', type: 'feed', timestamp: '2026-03-15T12:00:00', amount: 100, mode: 'auto' },
-  { id: '3', type: 'water', timestamp: '2026-03-15T09:00:00', amount: 200, mode: 'auto' },
-  { id: '4', type: 'feed', timestamp: '2026-03-15T08:00:00', amount: 100, mode: 'auto' },
-  { id: '5', type: 'water', timestamp: '2026-03-14T21:00:00', amount: 200, mode: 'auto' },
-];
 
 export function FeedWater() {
   const { activeHouse } = usePetHouse();
   const [feedAmount, setFeedAmount] = useState(100);
   const [waterAmount, setWaterAmount] = useState(200);
+  const [schedules, setSchedules] = useState<Schedule[]>([]);
+  const [history, setHistory] = useState<History[]>([]);
   
-  const [schedules, setSchedules] = useState<Schedule[]>(MOCK_SCHEDULES);
-  const [history, setHistory] = useState<History[]>(MOCK_HISTORY);
-
-  // API에서 스케줄 & 이력 가져오기
   useEffect(() => {
     const fetchData = async () => {
       try {
@@ -101,14 +83,10 @@ export function FeedWater() {
           supplyApi.getSupplySchedules(activeHouse.id),
           supplyApi.getSupplyHistory(activeHouse.id),
         ]);
-        if (schedulePage.content && schedulePage.content.length > 0) {
-          setSchedules(schedulePage.content.map(toSchedule));
-        }
-        if (historyPage.content && historyPage.content.length > 0) {
-          setHistory(historyPage.content.map(toHistory));
-        }
-      } catch {
-        console.info('[FeedWater] API 미연결 - Mock 데이터 사용');
+        setSchedules(schedulePage.content.map(toSchedule));
+        setHistory(historyPage.content.map(toHistory));
+      } catch (error) {
+        console.error('[FeedWater] API Fetch Error:', error);
       }
     };
     fetchData();

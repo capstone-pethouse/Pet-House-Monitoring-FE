@@ -22,7 +22,6 @@ import { usePetHouse } from "../../store/petStore";
 export function Dashboard() {
   const { activeHouse } = usePetHouse();
 
-  // Mock 초기값 (API 실패 시 fallback으로 유지됨)
   const [currentData, setCurrentData] = useState({
     co2: 450,
     temperature: 22.5,
@@ -33,42 +32,24 @@ export function Dashboard() {
   const [cctvConnected] = useState(true);
   const [sendingVoice, setSendingVoice] = useState(false);
 
-  // API에서 센서 데이터 가져오기 + Mock 시뮬레이션 fallback
   useEffect(() => {
-    let useApi = true;
-
     const fetchSensorData = async () => {
       try {
         const data = await getLatestSensorData(activeHouse.id);
-        if (useApi) {
-          setCurrentData(prev => ({
-            ...prev,
-            co2: data.co2 ?? prev.co2,
-            temperature: data.temperature ?? prev.temperature,
-            humidity: data.humidity ?? prev.humidity,
-          }));
-        }
-      } catch {
-        // API 실패 시 기존 mock 시뮬레이션으로 fallback
-        useApi = false;
+        setCurrentData(prev => ({
+          ...prev,
+          co2: data.co2 ?? prev.co2,
+          temperature: data.temperature ?? prev.temperature,
+          humidity: data.humidity ?? prev.humidity,
+        }));
+      } catch (error) {
+        console.error('[Dashboard] API Fetch Error:', error);
       }
     };
 
     fetchSensorData();
 
-    const interval = setInterval(() => {
-      if (useApi) {
-        fetchSensorData();
-      } else {
-        // Mock 시뮬레이션 (기존 코드 유지)
-        setCurrentData(prev => ({
-          ...prev,
-          co2: 400 + Math.random() * 200,
-          temperature: 20 + Math.random() * 5,
-          humidity: 50 + Math.random() * 15,
-        }));
-      }
-    }, 3000);
+    const interval = setInterval(fetchSensorData, 3000);
 
     return () => clearInterval(interval);
   }, [activeHouse.id]);
