@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "../../components/ui/card";
 import { Button } from "../../components/ui/button";
 import { Input } from "../../components/ui/input";
@@ -17,6 +17,9 @@ import {
 } from "lucide-react";
 import { toast } from "sonner";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "../../components/ui/dialog";
+import { usePetHouse } from "../../store/petStore";
+import * as supplyApi from "../../services/supplyApi";
+import type { SupplyScheduleResponse, SupplyLogHistoryResponse } from "../../types/api";
 
 interface Schedule {
   id: string;
@@ -34,25 +37,82 @@ interface History {
   mode: 'manual' | 'auto';
 }
 
+/** 백엔드 SupplyScheduleResponse → 프론트 Schedule 변환 */
+function toSchedule(res: SupplyScheduleResponse): Schedule {
+  // cronExpression에서 시간 추출 시도 (e.g. "0 0 8 * * ?" → "08:00")
+  let time = '00:00';
+  try {
+    const parts = res.cronExpression.split(' ');
+    if (parts.length >= 3) {
+      time = `${parts[2].padStart(2, '0')}:${parts[1].padStart(2, '0')}`;
+    }
+  } catch { /* mock time 유지 */ }
+
+  return {
+    id: String(res.scheduleId),
+    type: res.feedType === 'FOOD' ? 'feed' : 'water',
+    time,
+    amount: res.amount,
+    enabled: res.enabled,
+  };
+}
+
+/** 백엔드 SupplyLogHistoryResponse → 프론트 History 변환 */
+function toHistory(res: SupplyLogHistoryResponse, index: number): History {
+  return {
+    id: String(index),
+    type: res.feedType === 'FOOD' ? 'feed' : 'water',
+    timestamp: res.createdAt,
+    amount: res.amount,
+    mode: res.triggerType === 'AUTO' ? 'auto' : 'manual',
+  };
+}
+
+// Mock 초기 데이터 (API 실패 시 fallback)
+const MOCK_SCHEDULES: Schedule[] = [
+  { id: '1', type: 'feed', time: '08:00', amount: 100, enabled: true },
+  { id: '2', type: 'feed', time: '18:00', amount: 100, enabled: true },
+  { id: '3', type: 'water', time: '09:00', amount: 200, enabled: true },
+  { id: '4', type: 'water', time: '15:00', amount: 200, enabled: true },
+  { id: '5', type: 'water', time: '21:00', amount: 200, enabled: true },
+];
+
+const MOCK_HISTORY: History[] = [
+  { id: '1', type: 'water', timestamp: '2026-03-15T14:23:00', amount: 200, mode: 'manual' },
+  { id: '2', type: 'feed', timestamp: '2026-03-15T12:00:00', amount: 100, mode: 'auto' },
+  { id: '3', type: 'water', timestamp: '2026-03-15T09:00:00', amount: 200, mode: 'auto' },
+  { id: '4', type: 'feed', timestamp: '2026-03-15T08:00:00', amount: 100, mode: 'auto' },
+  { id: '5', type: 'water', timestamp: '2026-03-14T21:00:00', amount: 200, mode: 'auto' },
+];
+
 export function FeedWater() {
+  const { activeHouse } = usePetHouse();
   const [feedAmount, setFeedAmount] = useState(100);
   const [waterAmount, setWaterAmount] = useState(200);
   
-  const [schedules, setSchedules] = useState<Schedule[]>([
-    { id: '1', type: 'feed', time: '08:00', amount: 100, enabled: true },
-    { id: '2', type: 'feed', time: '18:00', amount: 100, enabled: true },
-    { id: '3', type: 'water', time: '09:00', amount: 200, enabled: true },
-    { id: '4', type: 'water', time: '15:00', amount: 200, enabled: true },
-    { id: '5', type: 'water', time: '21:00', amount: 200, enabled: true },
-  ]);
+  const [schedules, setSchedules] = useState<Schedule[]>(MOCK_SCHEDULES);
+  const [history, setHistory] = useState<History[]>(MOCK_HISTORY);
 
-  const [history] = useState<History[]>([
-    { id: '1', type: 'water', timestamp: '2026-03-15T14:23:00', amount: 200, mode: 'manual' },
-    { id: '2', type: 'feed', timestamp: '2026-03-15T12:00:00', amount: 100, mode: 'auto' },
-    { id: '3', type: 'water', timestamp: '2026-03-15T09:00:00', amount: 200, mode: 'auto' },
-    { id: '4', type: 'feed', timestamp: '2026-03-15T08:00:00', amount: 100, mode: 'auto' },
-    { id: '5', type: 'water', timestamp: '2026-03-14T21:00:00', amount: 200, mode: 'auto' },
-  ]);
+  // API에서 스케줄 & 이력 가져오기
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        const [schedulePage, historyPage] = await Promise.all([
+          supplyApi.getSupplySchedules(activeHouse.id),
+          supplyApi.getSupplyHistory(activeHouse.id),
+        ]);
+        if (schedulePage.content && schedulePage.content.length > 0) {
+          setSchedules(schedulePage.content.map(toSchedule));
+        }
+        if (historyPage.content && historyPage.content.length > 0) {
+          setHistory(historyPage.content.map(toHistory));
+        }
+      } catch {
+        console.info('[FeedWater] API 미연결 - Mock 데이터 사용');
+      }
+    };
+    fetchData();
+  }, [activeHouse.id]);
 
   const [newSchedule, setNewSchedule] = useState({
     type: 'feed' as 'feed' | 'water',

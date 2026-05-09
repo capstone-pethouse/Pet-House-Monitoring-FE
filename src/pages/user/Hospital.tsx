@@ -1,9 +1,8 @@
-import { useState, useEffect, useMemo } from "react";
+import { useState, useEffect, useMemo, useCallback } from "react";
 import L from "leaflet";
 import "leaflet/dist/leaflet.css";
 import { MapContainer, TileLayer, Marker, Popup, useMap } from "react-leaflet";
 import { Card, CardContent } from "../../components/ui/card";
-import { Badge } from "../../components/ui/badge";
 import { Button } from "../../components/ui/button";
 import { Input } from "../../components/ui/input";
 import {
@@ -13,7 +12,6 @@ import {
     Navigation,
     ChevronLeft,
     Clock,
-    Star,
     Stethoscope,
     AlertCircle,
     Loader2,
@@ -23,6 +21,7 @@ import {
     ChevronRight,
 } from "lucide-react";
 import { toast } from "sonner";
+import { getHospitalList, getHospitalDetail } from "../../services/hospitalApi";
 
 // ─── Types ───────────────────────────────────────────────────────────────────
 
@@ -38,7 +37,7 @@ interface Hospital {
 }
 
 interface MedItem {
-    hospitalSeq: number;
+    hospitalSeq?: number; // API 응답에는 포함되지 않을 수 있음
     medCode: string;
 }
 
@@ -183,13 +182,14 @@ function MedBadge({ code }: { code: string }) {
 function HospitalDetail({
     hospital,
     distance,
+    medList,
     onBack,
 }: {
     hospital: Hospital;
     distance: number;
+    medList: MedItem[];
     onBack: () => void;
 }) {
-    const medList = MOCK_MED_LIST[hospital.seq] ?? [];
 
     return (
         <div className="flex flex-col h-full">
@@ -284,8 +284,8 @@ function HospitalCard({
         <div
             onClick={onClick}
             className={`p-3.5 rounded-xl border-2 cursor-pointer transition-all ${isSelected
-                    ? "border-blue-400 bg-blue-50 shadow-sm"
-                    : "border-gray-100 bg-white hover:border-blue-200 hover:bg-blue-50/30"
+                ? "border-blue-400 bg-blue-50 shadow-sm"
+                : "border-gray-100 bg-white hover:border-blue-200 hover:bg-blue-50/30"
                 }`}
         >
             <div className="flex items-start justify-between gap-2 mb-2">
@@ -299,10 +299,10 @@ function HospitalCard({
                     </span>
                 </div>
                 <span className={`flex-shrink-0 text-xs font-bold px-2 py-0.5 rounded-full ${hospital.distance < 1
-                        ? "bg-green-100 text-green-700"
-                        : hospital.distance < 3
-                            ? "bg-blue-100 text-blue-700"
-                            : "bg-gray-100 text-gray-600"
+                    ? "bg-green-100 text-green-700"
+                    : hospital.distance < 3
+                        ? "bg-blue-100 text-blue-700"
+                        : "bg-gray-100 text-gray-600"
                     }`}>
                     {formatDistance(hospital.distance)}
                 </span>
@@ -344,17 +344,50 @@ export function HospitalPage() {
     const [mapCenter, setMapCenter] = useState<[number, number]>(DEFAULT_CENTER);
     const [mapZoom, setMapZoom] = useState(14);
 
+    // API에서 가져온 병원 데이터 (실패 시 mock 사용)
+    const [hospitals, setHospitals] = useState<Hospital[]>(MOCK_HOSPITALS);
+    const [apiMedList, setApiMedList] = useState<Record<number, MedItem[]>>(MOCK_MED_LIST);
+
+    // API에서 병원 목록 가져오기
+    useEffect(() => {
+        const fetchHospitals = async () => {
+            try {
+                const page = await getHospitalList({ size: 100 });
+                if (page.content && page.content.length > 0) {
+                    setHospitals(page.content);
+                }
+            } catch {
+                // API 실패 시 기존 mock 데이터 유지
+                console.info('[Hospital] API 미연결 - Mock 데이터 사용');
+            }
+        };
+        fetchHospitals();
+    }, []);
+
+    // 병원 상세(진료과목) 정보 가져오기
+    const fetchMedList = useCallback(async (seq: number) => {
+        if (apiMedList[seq] && apiMedList[seq] !== MOCK_MED_LIST[seq]) return; // 이미 API에서 가져온 경우
+        try {
+            const detail = await getHospitalDetail(seq);
+            if (detail.medList && detail.medList.length > 0) {
+                setApiMedList(prev => ({ ...prev, [seq]: detail.medList }));
+            }
+        } catch {
+            // mock 유지
+        }
+    }, [apiMedList]);
+
     // Calculate distances
     const hospitalsWithDistance = useMemo<HospitalWithDistance[]>(() => {
         const center = userLocation ?? DEFAULT_CENTER;
-        return MOCK_HOSPITALS.map((h) => ({
+        return hospitals.map((h) => ({
             ...h,
             distance: haversine(center[0], center[1], h.latitude, h.longitude),
         })).sort((a, b) => a.distance - b.distance);
-    }, [userLocation]);
+    }, [userLocation, hospitals]);
 
     // Filtered list
-    const filtered = useMemo(() => {
+    const filtered = useMemo<HospitalWithDistance[]>(() => {
         return hospitalsWithDistance.filter((h) => {
             const matchSearch =
                 search === "" ||
@@ -362,10 +395,14 @@ export function HospitalPage() {
                 h.location.includes(search);
             const matchMed =
                 selectedMedCode === "all" ||
-                (MOCK_MED_LIST[h.seq] ?? []).some((m) => m.medCode === selectedMedCode);
+                (apiMedList[h.seq] ?? []).some((m) => m.medCode === selectedMedCode);
             return matchSearch && matchMed;
         });
-    }, [hospitalsWithDistance, search, selectedMedCode]);
+    }, [hospitalsWithDistance, search, selectedMedCode, apiMedList]);
+
+    const isHospitalSelected = (h: HospitalWithDistance) => {
+        return !!selectedHospital && selectedHospital.seq === h.seq;
+    };
 
     const handleGetLocation = () => {
         if (!navigator.geolocation) {
@@ -397,6 +434,7 @@ export function HospitalPage() {
         setMapCenter([hospital.latitude, hospital.longitude]);
         setMapZoom(16);
         setMobileView("map");
+        fetchMedList(hospital.seq); // API에서 진료과목 상세 가져오기
     };
 
     const handleBack = () => {
@@ -495,6 +533,7 @@ export function HospitalPage() {
                         <HospitalDetail
                             hospital={selectedHospital}
                             distance={selectedHospital.distance}
+                            medList={apiMedList[selectedHospital.seq] ?? []}
                             onBack={handleBack}
                         />
                     ) : (
@@ -524,8 +563,8 @@ export function HospitalPage() {
                                     <button
                                         onClick={() => setSelectedMedCode("all")}
                                         className={`px-2.5 py-1 rounded-full text-xs font-medium border transition-all ${selectedMedCode === "all"
-                                                ? "bg-blue-600 text-white border-blue-600"
-                                                : "bg-white text-gray-600 border-gray-200 hover:border-blue-300"
+                                            ? "bg-blue-600 text-white border-blue-600"
+                                            : "bg-white text-gray-600 border-gray-200 hover:border-blue-300"
                                             }`}
                                     >
                                         전체
@@ -537,8 +576,8 @@ export function HospitalPage() {
                                                 key={code}
                                                 onClick={() => setSelectedMedCode(code === selectedMedCode ? "all" : code)}
                                                 className={`px-2.5 py-1 rounded-full text-xs font-medium border transition-all ${selectedMedCode === code
-                                                        ? `${meta.bg} ${meta.color} ${meta.border}`
-                                                        : "bg-white text-gray-600 border-gray-200 hover:border-gray-300"
+                                                    ? `${meta.bg} ${meta.color} ${meta.border}`
+                                                    : "bg-white text-gray-600 border-gray-200 hover:border-gray-300"
                                                     }`}
                                             >
                                                 {meta?.label ?? code}
@@ -557,7 +596,7 @@ export function HospitalPage() {
                                     </div>
                                 ) : (
                                     <div className="p-3 space-y-2">
-                                        {filtered.map((hospital, idx) => (
+                                        {filtered.map((hospital: HospitalWithDistance, idx) => (
                                             <div key={hospital.seq}>
                                                 {/* Distance separator */}
                                                 {idx > 0 &&
@@ -580,7 +619,7 @@ export function HospitalPage() {
                                                     )}
                                                 <HospitalCard
                                                     hospital={hospital}
-                                                    isSelected={selectedHospital?.seq === hospital.seq}
+                                                    isSelected={isHospitalSelected(hospital)}
                                                     onClick={() => handleSelectHospital(hospital)}
                                                 />
                                             </div>

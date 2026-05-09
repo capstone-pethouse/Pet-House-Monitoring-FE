@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "../../components/ui/card";
 import { Button } from "../../components/ui/button";
 import { Input } from "../../components/ui/input";
@@ -23,6 +23,9 @@ import {
   ChevronDown
 } from "lucide-react";
 import { toast } from "sonner";
+import { usePetHouse } from "../../store/petStore";
+import * as fanApi from "../../services/fanApi";
+import type { FanScheduleResponse } from "../../types/api";
 
 interface VentilationHistory {
   id: string;
@@ -54,35 +57,75 @@ const defaultNewRule = {
   conditions: [{ temp: 25, intensity: 70 }] as TempIntensityPair[],
 };
 
+/** 백엔드 FanScheduleResponse → 프론트 AutoRule 변환 */
+function toAutoRule(res: FanScheduleResponse): AutoRule {
+  return {
+    id: String(res.scheduleId),
+    timeStart: res.startTime?.substring(0, 5) ?? '00:00',  // "HH:mm:ss" → "HH:mm"
+    timeEnd: res.endTime?.substring(0, 5) ?? '00:00',
+    conditions: (res.fanScheduleDetailResponseList ?? []).map(d => ({
+      temp: d.temperature,
+      intensity: d.speed,
+    })),
+    enabled: true,  // 백엔드에서 enabled 필드가 별도로 없으므로 기본 true
+  };
+}
+
+// Mock 초기 데이터 (API 실패 시 fallback)
+const MOCK_AUTO_RULES: AutoRule[] = [
+  {
+    id: '1',
+    timeStart: '08:00',
+    timeEnd: '20:00',
+    conditions: [
+      { temp: 22, intensity: 50 },
+      { temp: 25, intensity: 70 },
+      { temp: 28, intensity: 90 },
+    ],
+    enabled: true,
+  },
+  {
+    id: '2',
+    timeStart: '20:00',
+    timeEnd: '08:00',
+    conditions: [
+      { temp: 24, intensity: 40 },
+      { temp: 27, intensity: 60 },
+    ],
+    enabled: false,
+  },
+];
+
+const MOCK_HISTORY: VentilationHistory[] = [
+  { id: '1', timestamp: '2026-03-15T14:30:00', duration: 10, intensity: 70, mode: 'auto', trigger: '온도 26°C 도달 (강도 70%)' },
+  { id: '2', timestamp: '2026-03-15T11:30:00', duration: 15, intensity: 80, mode: 'manual' },
+  { id: '3', timestamp: '2026-03-15T08:45:00', duration: 12, intensity: 60, mode: 'auto', trigger: '온도 25°C 도달 (강도 60%)' },
+  { id: '4', timestamp: '2026-03-14T16:20:00', duration: 20, intensity: 90, mode: 'auto', trigger: '온도 28°C 도달 (강도 90%)' },
+  { id: '5', timestamp: '2026-03-14T13:10:00', duration: 8, intensity: 50, mode: 'manual' },
+];
+
 export function Ventilation() {
+  const { activeHouse } = usePetHouse();
   const [isRunning, setIsRunning] = useState(false);
   const [intensity, setIntensity] = useState(50);
   const [autoMode, setAutoMode] = useState(false);
 
-  const [autoRules, setAutoRules] = useState<AutoRule[]>([
-    {
-      id: '1',
-      timeStart: '08:00',
-      timeEnd: '20:00',
-      conditions: [
-        { temp: 22, intensity: 50 },
-        { temp: 25, intensity: 70 },
-        { temp: 28, intensity: 90 },
-      ],
-      enabled: true,
-    },
-    {
-      id: '2',
-      timeStart: '20:00',
-      timeEnd: '08:00',
-      conditions: [
-        { temp: 24, intensity: 40 },
-        { temp: 27, intensity: 60 },
-      ],
-      enabled: false,
-    },
-  ]);
+  const [autoRules, setAutoRules] = useState<AutoRule[]>(MOCK_AUTO_RULES);
 
+  // API에서 환풍기 스케줄 가져오기
+  useEffect(() => {
+    const fetchSchedules = async () => {
+      try {
+        const page = await fanApi.getFanSchedules(activeHouse.id);
+        if (page.content && page.content.length > 0) {
+          setAutoRules(page.content.map(toAutoRule));
+        }
+      } catch {
+        console.info('[Ventilation] API 미연결 - Mock 데이터 사용');
+      }
+    };
+    fetchSchedules();
+  }, [activeHouse.id]);
 
   const [newRule, setNewRule] = useState({ ...defaultNewRule, conditions: [{ ...defaultCondition }] });
   const [editingRule, setEditingRule] = useState<AutoRule | null>(null);
@@ -90,13 +133,8 @@ export function Ventilation() {
   const [expandedRules, setExpandedRules] = useState<Set<string>>(new Set(['1']));
   const [addDialogOpen, setAddDialogOpen] = useState(false);
 
-  const [history] = useState<VentilationHistory[]>([
-    { id: '1', timestamp: '2026-03-15T14:30:00', duration: 10, intensity: 70, mode: 'auto', trigger: '온도 26°C 도달 (강도 70%)' },
-    { id: '2', timestamp: '2026-03-15T11:30:00', duration: 15, intensity: 80, mode: 'manual' },
-    { id: '3', timestamp: '2026-03-15T08:45:00', duration: 12, intensity: 60, mode: 'auto', trigger: '온도 25°C 도달 (강도 60%)' },
-    { id: '4', timestamp: '2026-03-14T16:20:00', duration: 20, intensity: 90, mode: 'auto', trigger: '온도 28°C 도달 (강도 90%)' },
-    { id: '5', timestamp: '2026-03-14T13:10:00', duration: 8, intensity: 50, mode: 'manual' },
-  ]);
+  const [history] = useState<VentilationHistory[]>(MOCK_HISTORY);
+
 
   const handleToggleVentilation = () => {
     setIsRunning(!isRunning);
@@ -469,7 +507,7 @@ export function Ventilation() {
             <Thermometer className="w-5 h-5 text-blue-600" />
             자동 제어 규칙
           </CardTitle>
-          <Dialog>
+          <Dialog open={addDialogOpen} onOpenChange={setAddDialogOpen}>
             <DialogTrigger asChild>
               <Button disabled={!autoMode}>
                 <Plus className="w-4 h-4 mr-2" />
